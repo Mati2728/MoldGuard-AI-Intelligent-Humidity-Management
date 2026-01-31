@@ -18,14 +18,14 @@ I bought a dehumidifier and a sensor, but I immediately hit the **"Ecosystem Wal
 I developed **MoldGuard-AI** to act as a local "Brain." It bypasses the need for a proprietary hub by using the Mac Mini's Bluetooth radio to "wake-lock" the sensor and its Wi-Fi to control the power.
 
 The system enforces a **Temporal State Machine** to optimize air quality and machine life:
-- **5-Hour Deep Extraction:** Once the threshold (50%) is hit, the machine runs for a mandatory 5-hour block. This is the only way to pull deep moisture out of walls and furniture to stop mold spores from germinating.
+- **5-Hour Deep Extraction:** Once the threshold (60%) is hit, the machine runs for a mandatory 5-hour block. This is the only way to pull deep moisture out of walls and furniture to stop mold spores from germinating.
 - **1.5-Hour Compressor Recovery:** To prevent hardware failure, the system enforces a 90-minute "hard-off" period after every run.
 - **7-Hour Daily Cap:** A safety limit to manage electricity costs and prevent the machine from overheating.
 
 ## 🛠 Hardware Stack
 - **Hygrometer:** [SwitchBot Meter](https://www.amazon.de/dp/B09QBR7XJD)
-- **Power Actuator:** [Meross MSS305 Smart Plug](https://www.amazon.de/dp/B0D7YP21YT)
-- **Dehumidifier:** [Comfee 16L](https://www.amazon.de/dp/B0DCVQC3RJ)
+- **Power Actuator:** [Meross MSS305 Smart Plug](https://www.amazon.de/dp/B0DCVQC3RJ)
+- **Dehumidifier:** [Comfee 16L](https://www.amazon.de/dp/B0D7YP21YT)
 
 ## 📊 Data & Analytics
 As a Data Scientist, I need to see the proof. This system generates **Daily CSV Reports** (e.g., `humidity_stats_2026-01-31_Saturday.csv`) including:
