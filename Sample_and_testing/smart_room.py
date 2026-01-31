@@ -11,10 +11,10 @@ from meross_iot.http_api import MerossHttpClient
 from meross_iot.manager import MerossManager
 
 # --- CONFIGURATION ---
-MY_UUID = "3468CF5B-939D-83A6-529B-385AF0A1D2C2"
-MEROSS_EMAIL = "ganeshbabu0707@icloud.com"
-MEROSS_PASS = "Bbabu8342@gmail" 
-TARGET_DEVICE_NAME = "Bed Plug"
+MY_UUID = ""
+MEROSS_EMAIL = ""
+MEROSS_PASS = "" 
+TARGET_DEVICE_NAME = ""
 
 HUMIDITY_ON = 60.0   
 HUMIDITY_OFF = 50.0  
