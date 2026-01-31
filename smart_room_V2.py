@@ -20,7 +20,7 @@ MEROSS_EMAIL = "Your_Email"
 MEROSS_PASS = "Your_Password" 
 TARGET_DEVICE_NAME = "Bed Plug"
 
-HUMIDITY_THRESHOLD = 50.0   
+HUMIDITY_THRESHOLD = 60.0   
 BASE_DIR = "/Volumes/Studies/Smart Room/Log_File/"
 
 # --- LOGIC CONSTANTS ---
