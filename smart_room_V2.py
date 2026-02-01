@@ -22,10 +22,8 @@ MEROSS_EMAIL = ""
 MEROSS_PASS = "" 
 TARGET_DEVICE_NAME = "Bed Plug"
 
-# Logic Thresholds
-PRIMARY_THRESHOLD = 65.0      
-SECONDARY_THRESHOLD = 55.0    
-BASE_DIR = "/Users/ganeshbabukarunanithi/scripts/Log_Files/"
+HUMIDITY_THRESHOLD = 50.0   
+BASE_DIR = "/Volumes/Studies/Smart Room/Log_File/"
 
 # --- ⏱️ INTERVAL CONSTANTS (The Source of Truth) ---
 PRIMARY_DURATION = 4 * 3600      # 18000 Seconds
@@ -227,7 +225,4 @@ async def main():
     await worker(plug)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("\nExiting.")
+    asyncio.run(main())

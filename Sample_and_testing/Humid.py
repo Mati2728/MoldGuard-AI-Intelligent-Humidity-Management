@@ -3,7 +3,7 @@ from bleak import BleakScanner
 
 async def find_uuid_by_mac():
     # Your SwitchBot MAC Address
-    TARGET_MAC = "e65584067935".lower()
+    TARGET_MAC = "".lower()
     
     print(f"Searching for SwitchBot with MAC: {TARGET_MAC}...")
     devices = await BleakScanner.discover(timeout=10.0, return_adv=True)

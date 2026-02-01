@@ -10,8 +10,8 @@ from meross_iot.http_api import MerossHttpClient
 from meross_iot.manager import MerossManager
 
 # --- YOUR DETAILS ---
-EMAIL = "ganeshbabu0707@icloud.com"
-PASSWORD = "Bbabu8342@gmail" 
+EMAIL = ""
+PASSWORD = "" 
 API_URL = "https://iot.meross.com"
 
 async def main():

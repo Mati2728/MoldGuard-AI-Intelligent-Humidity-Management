@@ -17,7 +17,7 @@ except ImportError:
     sys.exit(1)
 
 # 3. YOUR DEVICE ID
-MY_UUID = "3468CF5B-939D-83A6-529B-385AF0A1D2C2"
+MY_UUID = ""
 
 def decode_switchbot_data(adv_data):
     """
