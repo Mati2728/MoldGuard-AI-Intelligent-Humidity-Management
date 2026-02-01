@@ -1,0 +1,8 @@
+Timestamp,Event,Humidity,Duration_Logged,Daily_Total_Accumulated,Avg_Humidity,Notes
+02:29:20,START_SECONDARY,55,0,0,0,Target: 3600s
+03:41:06,STOP_MACHINE,52,4304,4305.0,0,Run Finished
+10:34:49,BREAK_ENDED,62,24822,4304.0,57.0,Cooldown Complete
+10:34:51,START_SECONDARY,62,0,0,0,Target: 3600s
+11:35:33,STOP_MACHINE,54,3641,7946.0,0,Run Finished
+14:05:39,BREAK_ENDED,56,9005,7945.0,55.0,Cooldown Complete
+14:05:50,START_SECONDARY,56,0,0,0,Target: 3600s
