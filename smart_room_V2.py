@@ -1,3 +1,5 @@
+
+
 import sys
 import asyncio
 import time
@@ -5,7 +7,7 @@ import csv
 import os
 from datetime import datetime
 
-# 1. PATH FIX FOR MAC MINI
+# 1. ENVIRONMENT SETUP
 site_packages = "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages"
 if site_packages not in sys.path:
     sys.path.append(site_packages)
@@ -14,66 +16,195 @@ from bleak import BleakClient, BleakScanner
 from meross_iot.http_api import MerossHttpClient
 from meross_iot.manager import MerossManager
 
-# --- CONFIGURATION ---
-MY_UUID = "Your UUID"
-MEROSS_EMAIL = "Your_Email"
-MEROSS_PASS = "Your_Password" 
+# --- ⚙️ USER CONFIGURATION ---
+MY_UUID = ""
+MEROSS_EMAIL = ""
+MEROSS_PASS = "" 
 TARGET_DEVICE_NAME = "Bed Plug"
 
-HUMIDITY_THRESHOLD = 50.0   
-BASE_DIR = "/Volumes/Studies/Smart Room/Log_File/"
+# Logic Thresholds
+PRIMARY_THRESHOLD = 65.0      
+SECONDARY_THRESHOLD = 55.0    
+BASE_DIR = "/Users/ganeshbabukarunanithi/scripts/Log_Files/"
 
-# --- LOGIC CONSTANTS ---
-MIN_RUN_TIME = 5 * 3600        
-COOLDOWN_TIME = 1.5 * 3600     
-RETRIGGER_RUN_TIME = 1 * 3600  
-MAX_DAILY_RUN = 7 * 3600       
+# --- ⏱️ INTERVAL CONSTANTS (The Source of Truth) ---
+PRIMARY_DURATION = 4 * 3600      # 18000 Seconds
+SECONDARY_DURATION = 1 * 3600    # 3600 Seconds
+COOLDOWN_DURATION = 2.5 * 3600   # 5400 Seconds
+MAX_DAILY_TOTAL = 6 * 3600       # 25200 Seconds
 
-# --- STATE & ANALYTICS ---
-last_turn_on_time = None
-last_turn_off_time = None
-total_daily_runtime = 0
-current_day = datetime.now().date()
-needs_forced_on = True 
+data_queue = asyncio.Queue()
 
-hourly_readings = []
-last_log_time = time.time()
-daily_history = [] 
+def get_today_csv_path():
+    return f"{BASE_DIR}MoldGuard_{datetime.now().strftime('%Y-%m-%d_%A')}.csv"
 
-async def log_data(humidity):
-    global last_log_time, hourly_readings, daily_history
-    hourly_readings.append(humidity)
-    
-    # Check if an hour has passed
-    if time.time() - last_log_time >= 3600:
-        now_dt = datetime.now()
-        avg_h = sum(hourly_readings) / len(hourly_readings)
-        daily_history.append(avg_h)
-        if len(daily_history) > 24: daily_history.pop(0) 
-        overall_avg = sum(daily_history) / len(daily_history)
+def init_csv_brain():
+    """Ensures the CSV exists with the correct columns."""
+    path = get_today_csv_path()
+    if not os.path.exists(path):
+        with open(path, mode='w', newline='') as f:
+            fieldnames = [
+                "Timestamp", "Event", "Humidity", 
+                "Duration_Logged", "Daily_Total_Accumulated", 
+                "Avg_Humidity", "Notes"
+            ]
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+        print(f"📝 BRAIN CREATED: {os.path.basename(path)}")
+
+async def log_to_csv(event, humidity, duration=0, daily_total=0, avg_hum=0, notes=""):
+    """Writes to disk immediately."""
+    path = get_today_csv_path()
+    with open(path, mode='a', newline='') as f:
+        fieldnames = [
+            "Timestamp", "Event", "Humidity", 
+            "Duration_Logged", "Daily_Total_Accumulated", 
+            "Avg_Humidity", "Notes"
+        ]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writerow({
+            "Timestamp": datetime.now().strftime("%H:%M:%S"),
+            "Event": event, 
+            "Humidity": round(humidity, 1),
+            "Duration_Logged": int(duration),
+            "Daily_Total_Accumulated": round(daily_total, 2),
+            "Avg_Humidity": round(avg_hum, 1),
+            "Notes": notes
+        })
+        f.flush()
+        os.fsync(f.fileno())
+
+def read_brain_state():
+    """
+    Reads the CSV to calculate:
+    1. Total runtime used today.
+    2. Has the Primary run happened?
+    3. What was the LAST event and WHEN did it happen?
+    """
+    path = get_today_csv_path()
+    if not os.path.exists(path): return 0, False, None, 0, 0
+
+    total_time = 0
+    primary_done = False
+    last_event = None
+    last_event_timestamp = 0
+    last_event_humidity = 0
+
+    try:
+        with open(path, mode='r') as f:
+            reader = list(csv.DictReader(f))
+            for row in reader:
+                # Accumulate Time
+                if "STOP" in row['Event']:
+                    run_time = float(row['Duration_Logged'])
+                    total_time += run_time
+                    # Check against CONSTANT for Primary detection
+                    if run_time >= (PRIMARY_DURATION - 300):
+                        primary_done = True
+                
+                # Track Last Event
+                last_event = row['Event']
+                last_event_humidity = float(row['Humidity'])
+                dt = datetime.strptime(row['Timestamp'], "%H:%M:%S")
+                last_event_timestamp = datetime.now().replace(hour=dt.hour, minute=dt.minute, second=dt.second).timestamp()
+
+    except Exception:
+        return 0, False, None, 0, 0
+
+    return total_time, primary_done, last_event, last_event_timestamp, last_event_humidity
+
+async def worker(plug):
+    print("🤖 CSV BRAIN: ONLINE")
+    init_csv_brain()
+
+    while True:
+        humidity = await data_queue.get()
+        now = time.time()
         
-        # --- DYNAMIC FILE NAMING ---
-        # Format: humidity_stats_2026-01-31_Saturday.csv
-        date_str = now_dt.strftime("%Y-%m-%d")
-        day_name = now_dt.strftime("%A")
-        log_filename = f"{BASE_DIR}humidity_stats_{date_str}_{day_name}.csv"
+        # 1. READ THE BRAIN (Disk Read)
+        daily_total, primary_done, last_event, last_ts, last_hum = read_brain_state()
         
-        file_exists = os.path.isfile(log_filename)
-        with open(log_filename, mode='a', newline='') as f:
-            writer = csv.writer(f)
-            if not file_exists:
-                writer.writerow(["Timestamp", "Day", "Hourly_Avg", "Rolling_24h_Avg", "Total_Runtime_Sec"])
-            writer.writerow([now_dt.strftime("%H:%M"), day_name, round(avg_h, 2), round(overall_avg, 2), round(total_daily_runtime, 2)])
-        
-        print(f"📂 Data saved to: {os.path.basename(log_filename)}")
-        last_log_time = time.time()
-        hourly_readings = []
+        # 2. DETERMINE STATE
+        if last_event is None or "BREAK_ENDED" in last_event or "STOP" in last_event:
+            # Possible States: IDLE or COOLDOWN?
+            
+            # Check if we just stopped and need a break
+            if last_event and "STOP" in last_event:
+                time_since_stop = now - last_ts
+                
+                # --- COOLDOWN LOGIC ---
+                if time_since_stop < COOLDOWN_DURATION:
+                    remaining = COOLDOWN_DURATION - time_since_stop
+                    
+                    # If this is the *first* moment of cooldown detection (not logged yet), log start
+                    # (Wait, user wants start/end logged. We rely on STOP event as the start of break)
+                    
+                    sys.stdout.write(f"\r❄️ COOLDOWN: {remaining/60:.1f}m / {COOLDOWN_DURATION/60:.0f}m left | Break Start Hum: {last_hum}%   ")
+                    sys.stdout.flush()
+                else:
+                    # Break is Over. Did we log it?
+                    # We check if the last event was STOP. If yes, we need to log BREAK_ENDED now.
+                    print(f"\n✅ BREAK ENDED. Duration: {time_since_stop/60:.1f}m")
+                    avg_hum = (last_hum + humidity) / 2
+                    await log_to_csv("BREAK_ENDED", humidity, duration=time_since_stop, daily_total=daily_total, avg_hum=avg_hum, notes="Cooldown Complete")
+                    continue # Loop again to refresh state as IDLE
+
+            # --- IDLE LOGIC ---
+            # If last event was BREAK_ENDED or None, we are IDLE
+            if last_event is None or "BREAK_ENDED" in last_event:
+                if daily_total >= MAX_DAILY_TOTAL:
+                    sys.stdout.write(f"\r🛑 DAILY CAP HIT: {daily_total/3600:.2f}/{MAX_DAILY_TOTAL/3600:.0f}h   ")
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(f"\r👀 IDLE: {humidity}% | Primary Done: {primary_done}   ")
+                    sys.stdout.flush()
+                    
+                    # TRIGGERS
+                    target_duration = 0
+                    mode = ""
+                    
+                    if not primary_done and humidity >= PRIMARY_THRESHOLD:
+                        target_duration = PRIMARY_DURATION
+                        mode = "PRIMARY"
+                    elif humidity >= SECONDARY_THRESHOLD:
+                        target_duration = SECONDARY_DURATION
+                        mode = "SECONDARY"
+                    
+                    if mode:
+                        print(f"\n⚡ TRIGGER: {mode} ({humidity}%). Starting Plug.")
+                        await plug.async_turn_on()
+                        await log_to_csv(f"START_{mode}", humidity, notes=f"Target: {target_duration}s")
+
+        # --- RUNNING LOGIC ---
+        elif "START" in last_event:
+            # We are inside a run
+            elapsed = now - last_ts
+            
+            # Determine Target based on the Event Name in CSV
+            target_time = PRIMARY_DURATION if "PRIMARY" in last_event else SECONDARY_DURATION
+            
+            remaining = target_time - elapsed
+            
+            # Console Update
+            sys.stdout.write(f"\r⏳ RUNNING: {elapsed/60:.1f}m / {target_time/60:.0f}m | Hum: {humidity}%   ")
+            sys.stdout.flush()
+
+            # CHECK LIMITS
+            if elapsed >= target_time or (daily_total + elapsed) >= MAX_DAILY_TOTAL:
+                print(f"\n🛑 STOPPING. Target Reached.")
+                await plug.async_turn_off()
+                
+                # Log STOP
+                # New Total = Old Total (from CSV) + Elapsed
+                new_total = daily_total + elapsed
+                
+                await log_to_csv("STOP_MACHINE", humidity, duration=elapsed, daily_total=new_total, notes=f"Run Finished")
+
+        data_queue.task_done()
 
 async def main():
-    global last_turn_on_time, last_turn_off_time, total_daily_runtime, current_day, needs_forced_on
-    print("🚀 Starting Smart Room Automation v2.3...")
-
-    # Initialize Meross
+    print(f"🚀 MoldGuard-AI v8.0: Stateless CSV Brain")
+    
     http_api_client = await MerossHttpClient.async_from_user_password(
         email=MEROSS_EMAIL, password=MEROSS_PASS, api_base_url="https://iot.meross.com", ssl=False
     )
@@ -82,69 +213,21 @@ async def main():
     await manager.async_device_discovery()
     plug = next((d for d in manager.find_devices() if d.name == TARGET_DEVICE_NAME), None)
 
-    async def toggle_logic(humidity):
-        global last_turn_on_time, last_turn_off_time, total_daily_runtime, current_day, needs_forced_on
-        now = time.time()
-        today = datetime.now().date()
+    if not plug: return
 
-        if today != current_day:
-            total_daily_runtime = 0
-            current_day = today
-            needs_forced_on = True # Reset force-sync for the new day
-            print(f"📅 Resetting for {today.strftime('%A')}")
-
-        await plug.async_update()
-        is_on = plug.is_on
-
-        if is_on:
-            if last_turn_on_time is None: last_turn_on_time = now
-            if needs_forced_on:
-                print(f"⚠️ Syncing: Sending FORCE ON to {plug.name}...")
-                await plug.async_turn_on()
-                needs_forced_on = False
-
-            run_duration = now - last_turn_on_time
-            required = MIN_RUN_TIME if (total_daily_runtime < MIN_RUN_TIME) else RETRIGGER_RUN_TIME
-            
-            if run_duration >= required or (total_daily_runtime + run_duration) >= MAX_DAILY_RUN:
-                print(f"🛑 Stopping Cycle. Total runtime: {total_daily_runtime/3600:.2f}h")
-                await plug.async_turn_off()
-                last_turn_off_time = now
-                total_daily_runtime += run_duration
-                last_turn_on_time = None
-            return
-
-        if not is_on:
-            needs_forced_on = True 
-            if total_daily_runtime >= MAX_DAILY_RUN: return
-            if last_turn_off_time and (now - last_turn_off_time < COOLDOWN_TIME): return
-            if humidity >= HUMIDITY_THRESHOLD:
-                print(f"⚠️ Humidity {humidity}% high. Starting cycle...")
-                await plug.async_turn_on()
-                last_turn_on_time = now
-                needs_forced_on = False
-
-    def detection_callback(device, advertisement_data):
+    def ble_callback(device, advertisement_data):
         if device.address == MY_UUID:
             for uuid, data in advertisement_data.service_data.items():
                 if len(data) >= 6:
                     humidity = data[5] & 0x7F
-                    temp = (data[4] & 0x7F) + (data[3] / 10.0)
-                    print(f"📊 Live -> {humidity}% | {temp}°C | Runtime: {total_daily_runtime/3600:.2f}h")
-                    asyncio.create_task(toggle_logic(humidity))
-                    asyncio.create_task(log_data(humidity))
+                    data_queue.put_nowait(humidity)
 
-    scanner = BleakScanner(detection_callback=detection_callback)
+    scanner = BleakScanner(detection_callback=ble_callback)
     await scanner.start()
-
-    while True:
-        try:
-            async with BleakClient(MY_UUID, timeout=20.0) as client:
-                print(f"✅ LINK ACTIVE. Logic Engaged.")
-                while client.is_connected:
-                    await asyncio.sleep(10)
-        except Exception:
-            await asyncio.sleep(5)
+    await worker(plug)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nExiting.")
