@@ -1,43 +1,220 @@
-# MoldGuard-AI: Intelligent Humidity Management 🛡️🏠
+# 🛡️ MoldGuard-AI  
+### Autonomous, Compressor-Safe Humidity Control System (Edge-Based)
 
-**MoldGuard-AI** is an autonomous climate-control system built to combat severe indoor humidity and mold growth. Developed as an edge-computing solution on a Mac Mini, this system bridges the gap between **SwitchBot** sensors and **Meross** smart plugs, enforcing industrial-grade logic to maintain a healthy living environment.
+MoldGuard-AI is a **local, autonomous humidity management system** built to solve a *real, persistent mold problem* in a residential environment.
+
+This project was developed out of necessity — not as a demo — and applies **engineering-grade control logic** to protect both **human health** and **mechanical hardware**.
+
+---
+
+## 📖 The Story (Why This Exists)
+
+I live in **Koblenz, Germany**, where indoor humidity in my room stayed consistently between **70–80% RH**.
+
+The result:
+- Mold growth every **1–2 weeks**
+- Constant cleaning
+- Breathing discomfort
+- A real health concern
+
+I bought a **dehumidifier**, but quickly realized the bigger problem wasn’t the machine — it was **how it was controlled**.
+
+### What went wrong with existing solutions
+
+1. **Ecosystem Lock-In**
+   - My humidity sensor and smart plug could not communicate
+   - Vendors required a **paid proprietary hub (€30+)**
+   - No cross-brand automation without cloud dependency
+
+2. **“Dumb” Automation**
+   - Simple timers ignore real humidity
+   - Built-in apps toggle ON/OFF too frequently
+   - This **destroys compressor-based dehumidifiers**
+
+3. **No Mechanical Awareness**
+   - Compressors need:
+     - long run cycles
+     - pressure equalization
+     - enforced rest
+   - Consumer automations don’t respect this
+
+As a **Web & Data Science student**, I already had an always-on **Mac Mini**.  
+So instead of buying another hub, I built my own **local control brain**.
 
 ---
 
-## 🛑 The Problem: My Situation
-Living in Koblenz, I faced a recurring nightmare: **70% to 80% humidity levels** that were literally choking me off. Despite my best efforts, I was dealing with **mold growth every two weeks**, requiring constant cleaning and posing a serious health risk. 
+## 💡 What MoldGuard-AI Does
 
-I bought a dehumidifier and a sensor, but I immediately hit the **"Ecosystem Wall"**:
-1. **The Hub Problem:** To make the sensor talk to the plug, the manufacturers want you to buy a €30+ proprietary Hub. As a Data Science student, I knew my Mac Mini had the hardware to do this for free, but no app existed to bridge them.
-2. **"Dumb" Automation:** Basic timers don't react to real-time data. If I left the machine on, it wasted power; if I left it off, the mold returned.
-3. **Hardware Stress:** Constantly toggling a dehumidifier on/off ruins the compressor. I needed a system with "memory" and "patience."
+MoldGuard-AI turns a Mac Mini into an **edge-computing controller** that:
 
+- Reads real-time humidity via **Bluetooth (BLE)**
+- Controls power via **Wi-Fi**
+- Enforces **time-based logic**, not reactive toggles
+- Logs every decision for observability and recovery
 
-
-## 🚀 The Solution: Smart Logic Engine
-I developed **MoldGuard-AI** to act as a local "Brain." It bypasses the need for a proprietary hub by using the Mac Mini's Bluetooth radio to "wake-lock" the sensor and its Wi-Fi to control the power.
-
-The system enforces a **Temporal State Machine** to optimize air quality and machine life:
-- **5-Hour Deep Extraction:** Once the threshold (60%) is hit, the machine runs for a mandatory 5-hour block. This is the only way to pull deep moisture out of walls and furniture to stop mold spores from germinating.
-- **1.5-Hour Compressor Recovery:** To prevent hardware failure, the system enforces a 90-minute "hard-off" period after every run.
-- **7-Hour Daily Cap:** A safety limit to manage electricity costs and prevent the machine from overheating.
-
-## 🛠 Hardware Stack
-- **Hygrometer:** [SwitchBot Meter](https://www.amazon.de/dp/B09QBR7XJD)
-- **Power Actuator:** [Meross MSS305 Smart Plug](https://www.amazon.de/dp/B0DCVQC3RJ)
-- **Dehumidifier:** [Comfee 16L](https://www.amazon.de/dp/B0D7YP21YT)
-
-## 📊 Data & Analytics
-As a Data Scientist, I need to see the proof. This system generates **Daily CSV Reports** (e.g., `humidity_stats_2026-01-31_Saturday.csv`) including:
-- **Rolling 24-Hour Averages:** To track if the room is actually getting drier over time.
-- **Hourly Telemetry:** Logging humidity, temperature, and cumulative machine runtime.
-
-
-
-## 💻 Tech Stack
-- **Language:** Python 3.14 (macOS)
-- **Communication:** `Bleak` (BLE) & `Meross-Iot` (Wi-Fi/MQTT)
-- **Architecture:** Asynchronous, non-blocking event loop.
+No cloud.  
+No vendor lock-in.  
+No short cycling.
 
 ---
-**Developed by [Ganesh Babu](https://ganeshbabu.in)** *M.Sc. Web and Data Science Student | University of Koblenz*
+
+## 🧠 Core Control Philosophy
+
+> **Humidity must be controlled with time and memory — not switches.**
+
+MoldGuard-AI treats the dehumidifier as a **mechanical system**, not a smart toy.
+
+Key principles:
+- Moisture is stored in **walls, furniture, fabrics**
+- Short runs dry air but **do not stop mold**
+- Compressors fail from **frequent restarts**
+- Safety must be enforced by logic, not user discipline
+
+---
+
+## 🔁 Control Logic (State Machine)
+
+The system operates as a **deterministic temporal state machine**:
+
+### States
+- `IDLE` → monitoring humidity
+- `RUNNING` → dehumidifier powered ON
+- `COOLDOWN` → mandatory compressor rest
+
+State transitions are governed by **time + humidity**, not momentary readings.
+
+---
+
+## 📏 Humidity Thresholds
+
+| Purpose | Relative Humidity |
+|------|------------------|
+| Primary trigger (deep drying) | ≥ 65% |
+| Secondary trigger (maintenance) | ≥ 57% |
+
+---
+
+## ⏱ Run Strategy (Engineering Logic)
+
+### 1️⃣ Primary Run — Deep Extraction
+- **Trigger:** RH ≥ 65%
+- **Duration:** **5 hours**
+- **Reason:**
+  - Pulls moisture out of walls and furniture
+  - Breaks mold growth cycles at the structural level
+
+### 2️⃣ Secondary Run — Maintenance
+- **Trigger:** RH ≥ 57%
+- **Duration:** **1.5 hours**
+- **Reason:**
+  - Prevents rebound humidity
+  - Maintains safe equilibrium
+
+### 3️⃣ Mandatory Cooldown
+- **Duration:** **2.5 hours**
+- **Reason:**
+  - Allows refrigerant pressure equalization
+  - Prevents thermal stress and oil migration
+
+### 4️⃣ Daily Safety Cap
+- **Maximum runtime:** **7 hours/day**
+- Any run is **dynamically capped** if the daily budget is close
+
+---
+
+## 🛑 Compressor Safety Guarantees
+
+The system explicitly prevents:
+- Short cycling
+- Rapid restarts
+- Continuous 24/7 operation
+- Restart after abrupt power loss
+
+All rest periods exceed compressor equalization requirements by a wide margin.
+
+---
+
+## 📊 Observability & Fault Tolerance
+
+Every day generates a **CSV report** with:
+
+- Session ID
+- Start / end timestamps
+- Event type (PRIMARY / SECONDARY)
+- Start & end humidity
+- Target vs actual runtime
+- Daily cumulative runtime
+- Crash or recovery notes
+
+### Reliability Features
+- Atomic file writes
+- Header validation
+- Temporary file replacement
+- RAM-backed emergency recovery
+- Automatic session repair after reboot or crash
+
+---
+
+## 🧪 Real-World Results
+
+- Initial humidity: **~79% RH**
+- First drying phase: **~2.5 liters extracted**
+- Stabilized operation:
+  - ~6–7 hours compressor runtime/day
+  - High extraction efficiency per run
+  - Gradual moisture decline over days
+
+Fast tank fill indicates **efficient extraction**, not excessive cycling.
+
+---
+
+## 🧰 Hardware Used (Actual Devices)
+
+- **Hygrometer:**  
+  SwitchBot Meter (Bluetooth LE)  
+  https://www.amazon.de/dp/B09QBR7XJD
+
+- **Smart Plug:**  
+  Meross MSS305  
+  https://www.amazon.de/dp/B0DCVQC3RJ
+
+- **Dehumidifier:**  
+  Comfee 16L Compressor Dehumidifier  
+  https://www.amazon.de/dp/B0D7YP21YT
+
+- **Controller:**  
+  Apple Mac Mini (always-on, local edge node)
+
+---
+
+## 💻 Software Stack
+
+- **Language:** Python 3.14
+- **Bluetooth:** `bleak`
+- **IoT Control:** `meross-iot`
+- **Architecture:** Async, non-blocking event loop
+- **Platform:** macOS (edge execution)
+
+---
+
+## 🎯 Why This Project Matters (Recruiter Note)
+
+This project demonstrates:
+- Real-world problem solving
+- Systems thinking (software + hardware)
+- Fault-tolerant design
+- State machines & time-based control
+- Edge computing without cloud dependency
+- Respect for physical system constraints
+
+This is **not a tutorial project** — it is a deployed system solving a real problem.
+
+---
+
+## 👤 Author
+
+**Ganesh Babu**  
+M.Sc. Web & Data Science  
+University of Koblenz  
+
+🌐 https://ganeshbabu.in
