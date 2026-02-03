@@ -1,21 +1,45 @@
-MIT License
+MIT Non-Commercial License (Modified)
 
-Copyright (c) 2026 GANESHBABU K
+Copyright (c) 2026 Ganeshbabu K
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, merge, publish, and distribute the Software for PERSONAL,
+PRIVATE, and NON-COMMERCIAL purposes only, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. NON-COMMERCIAL USE ONLY
+   The Software may NOT be used, directly or indirectly, for any commercial,
+   business, or revenue-generating purpose. This includes, but is not limited to:
+   - Selling the Software or derivatives
+   - Offering it as part of a paid service or SaaS
+   - Bundling it with commercial hardware or products
+   - Using it within a company or organization for profit
+   - Monetizing access, data, or functionality derived from the Software
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. PRIVATE USE AND MODIFICATION
+   Private individuals are explicitly permitted to:
+   - Run the Software for personal use
+   - Modify the source code for their own needs
+   - Self-host and deploy the Software in private environments
+   - Share modified versions for NON-COMMERCIAL purposes only
+
+3. ATTRIBUTION
+   Any copies or substantial portions of the Software must retain the above
+   copyright notice and this permission notice.
+
+4. NO COMMERCIAL REDISTRIBUTION
+   Redistribution of the Software or derivative works is permitted only if:
+   - It is free of charge
+   - It is clearly marked as NON-COMMERCIAL
+   - It retains this license in full
+
+5. DISCLAIMER OF WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+   USE OR OTHER DEALINGS IN THE SOFTWARE.

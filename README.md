@@ -206,6 +206,8 @@ Each day produces a **CSV log** containing:
 - Async, non-blocking event loop
 - macOS (edge execution)
 
+⚠️ This project is licensed for **non-commercial use only**. Commercial or business use is strictly prohibited.
+
 ---
 
 ## 👤 Author
