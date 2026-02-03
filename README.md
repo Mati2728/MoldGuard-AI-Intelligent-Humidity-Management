@@ -1,9 +1,9 @@
 # 🛡️ MoldGuard-AI  
 ### Autonomous, Compressor-Safe Humidity Control System (Edge-Based)
 
-MoldGuard-AI is a **local, autonomous humidity management system** built to solve a *real, persistent mold problem* in a residential environment.
+MoldGuard-AI is a **local, autonomous humidity management system** built to solve a *real and persistent indoor mold problem* using **engineering-grade control logic**.
 
-This project was developed out of necessity — not as a demo — and applies **engineering-grade control logic** to protect both **human health** and **mechanical hardware**.
+It combines Bluetooth sensors, Wi-Fi power control, and a time-aware state machine to **remove moisture efficiently**, **reduce electricity usage**, and **protect both people and hardware**.
 
 ---
 
@@ -11,64 +11,60 @@ This project was developed out of necessity — not as a demo — and applies **
 
 I live in **Koblenz, Germany**, where indoor humidity in my room stayed consistently between **70–80% RH**.
 
-The result:
+The consequences were serious:
 - Mold growth every **1–2 weeks**
 - Constant cleaning
 - Breathing discomfort
-- A real health concern
+- Real health concerns, especially for **children and elderly people**, who are more vulnerable to **mold- and humidity-related lung problems**
 
-I bought a **dehumidifier**, but quickly realized the bigger problem wasn’t the machine — it was **how it was controlled**.
+A dehumidifier alone did not solve the problem — **how it was controlled mattered more than the machine itself**.
 
-### What went wrong with existing solutions
+---
 
-1. **Ecosystem Lock-In**
-   - My humidity sensor and smart plug could not communicate
+## ❌ Why Existing Solutions Failed
+
+1. **Ecosystem Lock-In**  
+   - Sensors and smart plugs could not communicate directly  
    - Vendors required a **paid proprietary hub (€30+)**
-   - No cross-brand automation without cloud dependency
 
-2. **“Dumb” Automation**
+2. **Naive Automation**  
    - Simple timers ignore real humidity
-   - Built-in apps toggle ON/OFF too frequently
-   - This **destroys compressor-based dehumidifiers**
+   - Built-in apps toggle ON/OFF frequently
+   - This wastes electricity and **damages compressors**
 
-3. **No Mechanical Awareness**
-   - Compressors need:
-     - long run cycles
-     - pressure equalization
-     - enforced rest
-   - Consumer automations don’t respect this
-
-As a **Web & Data Science student**, I already had an always-on **Mac Mini**.  
-So instead of buying another hub, I built my own **local control brain**.
+3. **No Physical Awareness**  
+   - Moisture is stored in **walls, furniture, fabrics**
+   - Short runs dry air but **do not stop mold**
+   - Continuous operation is inefficient and unsafe
 
 ---
 
 ## 💡 What MoldGuard-AI Does
 
-MoldGuard-AI turns a Mac Mini into an **edge-computing controller** that:
+MoldGuard-AI turns a Mac Mini into an **edge-computing control system** that:
 
-- Reads real-time humidity via **Bluetooth (BLE)**
+- Reads humidity via **Bluetooth (BLE)**
 - Controls power via **Wi-Fi**
-- Enforces **time-based logic**, not reactive toggles
-- Logs every decision for observability and recovery
+- Applies **time-based extraction logic**
+- Enforces mandatory rest periods
+- Logs every decision for transparency and recovery
 
-No cloud.  
-No vendor lock-in.  
-No short cycling.
+The result:
+- **Lower average electricity usage**
+- **Higher moisture removal efficiency**
+- **Stable, healthy indoor air**
 
 ---
 
 ## 🧠 Core Control Philosophy
 
-> **Humidity must be controlled with time and memory — not switches.**
+> **Humidity must be controlled with time and patience — not constant switching.**
 
-MoldGuard-AI treats the dehumidifier as a **mechanical system**, not a smart toy.
-
-Key principles:
-- Moisture is stored in **walls, furniture, fabrics**
-- Short runs dry air but **do not stop mold**
-- Compressors fail from **frequent restarts**
-- Safety must be enforced by logic, not user discipline
+Key insight:
+- Moisture leaves walls and furniture **slowly**
+- Cooldown periods allow stored moisture to **re-enter the air**
+- Each new run starts at a higher condensation potential
+- This makes the dehumidifier **more effective while running less**
 
 ---
 
@@ -76,12 +72,11 @@ Key principles:
 
 The system operates as a **deterministic temporal state machine**:
 
-### States
 - `IDLE` → monitoring humidity
-- `RUNNING` → dehumidifier powered ON
-- `COOLDOWN` → mandatory compressor rest
+- `RUNNING` → dehumidifier ON
+- `COOLDOWN` → mandatory rest & moisture release phase
 
-State transitions are governed by **time + humidity**, not momentary readings.
+State transitions depend on **humidity and elapsed time**, not momentary sensor noise.
 
 ---
 
@@ -99,48 +94,60 @@ State transitions are governed by **time + humidity**, not momentary readings.
 ### 1️⃣ Primary Run — Deep Extraction
 - **Trigger:** RH ≥ 65%
 - **Duration:** **5 hours**
-- **Reason:**
-  - Pulls moisture out of walls and furniture
-  - Breaks mold growth cycles at the structural level
+- **Purpose:**
+  - Remove moisture from **walls, furniture, fabrics**
+  - Stop mold growth at the structural level
+
+---
 
 ### 2️⃣ Secondary Run — Maintenance
 - **Trigger:** RH ≥ 57%
 - **Duration:** **1.5 hours**
-- **Reason:**
-  - Prevents rebound humidity
-  - Maintains safe equilibrium
-
-### 3️⃣ Mandatory Cooldown
-- **Duration:** **2.5 hours**
-- **Reason:**
-  - Allows refrigerant pressure equalization
-  - Prevents thermal stress and oil migration
-
-### 4️⃣ Daily Safety Cap
-- **Maximum runtime:** **7 hours/day**
-- Any run is **dynamically capped** if the daily budget is close
+- **Purpose:**
+  - Prevent rebound humidity
+  - Maintain a safe equilibrium
 
 ---
 
-## 🛑 Compressor Safety Guarantees
+### 3️⃣ Mandatory Cooldown — Efficiency & Safety Phase
+- **Duration:** **2.5 hours**
+- **Purpose:**
+  - Protect the compressor (pressure equalization, thermal rest)
+  - Allow walls and furniture to **release stored moisture**
+  - Increase efficiency of the next run
+  - Reduce unnecessary electricity consumption
+
+Cooldown time is **productive**, not wasted.
+
+---
+
+### 4️⃣ Daily Safety Cap
+- **Maximum runtime:** **7 hours/day**
+- Prevents overuse
+- Reduces energy cost
+- Extends hardware lifespan
+
+---
+
+## 🛑 Compressor Protection
 
 The system explicitly prevents:
 - Short cycling
 - Rapid restarts
+- Restart under pressure
 - Continuous 24/7 operation
-- Restart after abrupt power loss
 
-All rest periods exceed compressor equalization requirements by a wide margin.
+All OFF periods exceed compressor equalization requirements by a wide margin.
 
 ---
 
-## 📊 Observability & Fault Tolerance
+## 📊 Observability & Reliability
 
-Every day generates a **CSV report** with:
+Each day produces a **CSV log** containing:
 
 - Session ID
 - Start / end timestamps
-- Event type (PRIMARY / SECONDARY)
+- Event type
 - Start & end humidity
 - Target vs actual runtime
 - Daily cumulative runtime
@@ -151,24 +158,28 @@ Every day generates a **CSV report** with:
 - Header validation
 - Temporary file replacement
 - RAM-backed emergency recovery
-- Automatic session repair after reboot or crash
+- Automatic session repair after reboot
 
 ---
 
 ## 🧪 Real-World Results
 
-- Initial humidity: **~79% RH**
-- First drying phase: **~2.5 liters extracted**
-- Stabilized operation:
-  - ~6–7 hours compressor runtime/day
-  - High extraction efficiency per run
-  - Gradual moisture decline over days
+### Before MoldGuard-AI
+- Manual or continuous operation
+- **~18 hours** required to extract **~2.5 liters**
+- High electricity usage
+- Poor long-term mold control
 
-Fast tank fill indicates **efficient extraction**, not excessive cycling.
+### With MoldGuard-AI
+- Time-aware extraction + enforced rest
+- Same **~2.5 liters extracted in ~7–8 hours**
+- Fewer operating hours
+- Lower electricity consumption
+- Stable, healthier indoor air
 
 ---
 
-## 🧰 Hardware Used (Actual Devices)
+## 🧰 Hardware Used
 
 - **Hygrometer:**  
   SwitchBot Meter (Bluetooth LE)  
@@ -183,38 +194,23 @@ Fast tank fill indicates **efficient extraction**, not excessive cycling.
   https://www.amazon.de/dp/B0D7YP21YT
 
 - **Controller:**  
-  Apple Mac Mini (always-on, local edge node)
+  Apple Mac Mini M4
 
 ---
 
 ## 💻 Software Stack
 
-- **Language:** Python 3.14
-- **Bluetooth:** `bleak`
-- **IoT Control:** `meross-iot`
-- **Architecture:** Async, non-blocking event loop
-- **Platform:** macOS (edge execution)
-
----
-
-## 🎯 Why This Project Matters (Recruiter Note)
-
-This project demonstrates:
-- Real-world problem solving
-- Systems thinking (software + hardware)
-- Fault-tolerant design
-- State machines & time-based control
-- Edge computing without cloud dependency
-- Respect for physical system constraints
-
-This is **not a tutorial project** — it is a deployed system solving a real problem.
+- Python 3.14
+- `bleak` (Bluetooth LE)
+- `meross-iot` (Wi-Fi control)
+- Async, non-blocking event loop
+- macOS (edge execution)
 
 ---
 
 ## 👤 Author
 
 **Ganesh Babu**  
-M.Sc. Web & Data Science  
 University of Koblenz  
 
 🌐 https://ganeshbabu.in
